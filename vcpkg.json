@@ -1,0 +1,15 @@
+{
+  "name": "mmnx",
+  "version": "0.0.1",
+  "builtin-baseline": "a34997af6c00d3e5711a4a75428c34a99a5f1c8b",
+  "dependencies": [
+    "sciterjs"
+  ],
+  "overrides": [
+    {
+      "name": "sciterjs",
+      "version": "4.4.8.38",
+      "port-version": 0
+    }
+  ]
+}

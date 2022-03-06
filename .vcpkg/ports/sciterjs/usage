@@ -1,0 +1,6 @@
+To use SCITERJS add the following to your CMake project:
+
+    find_package(SCITERJS REQUIRED)
+    target_include_directories(main PRIVATE ${SCITERJS_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${SCITERJS_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${SCITERJS_LIBRARIES})

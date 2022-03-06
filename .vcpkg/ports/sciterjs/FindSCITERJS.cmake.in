@@ -1,0 +1,119 @@
+# Distributed under the OSI-approved BSD 3-Clause License.
+#
+#.rst:
+# FindSCITERJS
+# --------
+#
+# Find the SCITERJS libraries
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# The following variables will be defined:
+#
+#  ``SCITERJS_FOUND``
+#    True if SCITERJS found on the local system
+#
+#  ``SCITERJS_INCLUDE_DIRS``
+#    Location of SCITERJS header files
+#
+#  ``SCITERJS_LIBRARY_DIRS``
+#    Location of SCITERJS libraries
+#
+#  ``SCITERJS_LIBRARIES``
+#    List of the SCITERJS libraries found
+#
+#
+
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+include(CMakeFindDependencyMacro)
+
+if(NOT SCITERJS_FOUND)
+
+# Compute the installation path relative to this file.
+get_filename_component(SEARCH_PATH "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+if(SEARCH_PATH STREQUAL "/")
+  set(SEARCH_PATH "")
+endif()
+
+set(SCITERJS_VERSION "@SCITERJS_VERSION@")
+
+function(append_dependencies out)
+    cmake_parse_arguments(PARSE_ARGV 1 "arg" "DEBUG" "NAMES" "")
+    if(${arg_DEBUG})
+        set(config DEBUG)
+        set(path "${CURRENT_INSTALLED_DIR}/debug/lib/")
+    else()
+        set(config RELEASE)
+        set(path "${CURRENT_INSTALLED_DIR}/lib/")
+    endif()
+    foreach(lib_name ${arg_NAMES})
+        if("${lib_name}" STREQUAL "-pthread")
+            list(APPEND ${out} "-pthread")
+        elseif("${lib_name}" STREQUAL "-pthreads")
+            list(APPEND ${out} "-pthreads")
+        elseif("${lib_name}" STREQUAL "gcc")
+            list(APPEND ${out} "-lgcc")
+        elseif("${lib_name}" STREQUAL "gcc_s")
+            list(APPEND ${out} "-lgcc_s")
+        elseif("${lib_name}" STREQUAL "stdc++")
+            list(APPEND ${out} "-lstdc++")
+        else()
+            # first look in ${path} specifically to ensure we find the right release/debug variant
+            find_library(SCITERJS_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" PATHS "${path}" NO_DEFAULT_PATH)
+            # if not found there, must be a system dependency, so look elsewhere
+            find_library(SCITERJS_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" REQUIRED)
+            list(APPEND ${out} "${SCITERJS_DEPENDENCY_${lib_name}_${config}}")
+        endif()
+    endforeach()
+    set("${out}" "${${out}}" PARENT_SCOPE)
+endfunction()
+
+macro(SCITERJS_FIND libname)
+  if(NOT SCITERJS_${libname}_INCLUDE_DIRS)
+    find_path(SCITERJS_${libname}_INCLUDE_DIRS NAMES "sciterjs/${libname}-x.h" PATHS ${SEARCH_PATH}/include NO_DEFAULT_PATH)
+  endif()
+  if(NOT SCITERJS_${libname}_LIBRARY)
+    find_library(SCITERJS_${libname}_LIBRARY_RELEASE NAMES ${libname} PATHS ${SEARCH_PATH}/lib/ NO_DEFAULT_PATH)
+    find_library(SCITERJS_${libname}_LIBRARY_DEBUG NAMES ${libname} PATHS ${SEARCH_PATH}/debug/lib/ NO_DEFAULT_PATH)
+    get_filename_component(SCITERJS_${libname}_LIBRARY_RELEASE_DIR ${SCITERJS_${libname}_LIBRARY_RELEASE} DIRECTORY)
+    get_filename_component(SCITERJS_${libname}_LIBRARY_DEBUG_DIR ${SCITERJS_${libname}_LIBRARY_DEBUG} DIRECTORY)
+    select_library_configurations(SCITERJS_${libname})
+    set(SCITERJS_${libname}_LIBRARY ${SCITERJS_${libname}_LIBRARY} CACHE STRING "")
+  endif()
+  if (SCITERJS_${libname}_LIBRARY AND SCITERJS_${libname}_INCLUDE_DIRS)
+    set(SCITERJS_${libname}_FOUND TRUE BOOL)
+    list(APPEND SCITERJS_INCLUDE_DIRS ${SCITERJS_${libname}_INCLUDE_DIRS})
+    list(APPEND SCITERJS_LIBRARIES ${SCITERJS_${libname}_LIBRARY})
+    list(APPEND SCITERJS_LIBRARY_DIRS ${SCITERJS_${libname}_LIBRARY_RELEASE_DIR} ${SCITERJS_${libname}_LIBRARY_DEBUG_DIR})
+  endif()
+endmacro(SCITERJS_FIND)
+
+SCITERJS_FIND(sciter)
+
+if (SCITERJS_sciter_FOUND)
+  list(REMOVE_DUPLICATES SCITERJS_INCLUDE_DIRS)
+  list(REMOVE_DUPLICATES SCITERJS_LIBRARY_DIRS)
+  set(SCITERJS_sciter_VERSION "@SCITERJS_VERSION@" CACHE STRING "")
+
+  append_dependencies(SCITERJS_DEPS_LIBRARY_RELEASE NAMES "@SCITERJS_DEPENDENCIES_RELEASE@")
+  append_dependencies(SCITERJS_DEPS_LIBRARY_DEBUG   NAMES "@SCITERJS_DEPENDENCIES_DEBUG@" DEBUG)
+  if(SCITERJS_DEPS_LIBRARY_RELEASE OR SCITERJS_DEPS_LIBRARY_DEBUG)
+    select_library_configurations(SCITERJS_DEPS)
+    list(APPEND SCITERJS_LIBRARIES ${SCITERJS_DEPS_LIBRARY})
+  endif()
+
+  set(SCITERJS_LIBRARY ${SCITERJS_LIBRARIES})
+
+  set(SCITERJS_FOUND TRUE CACHE BOOL "")
+  set(SCITERJS_LIBRARIES ${SCITERJS_LIBRARIES} CACHE STRING "")
+  set(SCITERJS_INCLUDE_DIRS ${SCITERJS_INCLUDE_DIRS} CACHE STRING "")
+  set(SCITERJS_LIBRARY_DIRS ${SCITERJS_LIBRARY_DIRS} CACHE STRING "")
+endif()
+
+find_package_handle_standard_args(SCITERJS REQUIRED_VARS SCITERJS_LIBRARIES SCITERJS_LIBRARY_DIRS SCITERJS_INCLUDE_DIRS)
+
+endif()

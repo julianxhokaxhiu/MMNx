@@ -1,0 +1,8 @@
+{
+  "default": {
+    "sciterjs": {
+      "baseline": "4.4.8.38",
+      "port-version": 0
+    }
+  }
+}
